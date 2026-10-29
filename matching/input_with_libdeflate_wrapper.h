@@ -5,6 +5,9 @@
 
 #include "../coders/libdeflate/libdeflate.h"
 #include "MGMP_API.h"
+#ifdef MBGC_WITH_ZSTD
+#include <zstd.h>
+#endif
 
 struct mgmpInFile {
     uint8_t* fileOut;
@@ -18,6 +21,7 @@ struct mgmpInFile {
 
 #define GZIP_ID1		0x1F
 #define GZIP_ID2		0x8B
+#define ZSTD_MAGIC		0xFD2FB528
 
 extern MGMP_Decoder_API* iterableDecoder;
 

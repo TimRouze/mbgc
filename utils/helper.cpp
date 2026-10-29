@@ -98,6 +98,8 @@ void PgHelpers::normalizePath(string &fileName, int &finalPos, int &finalLen, bo
     finalLen = fileName.length() - finalPos;
     if (fileName.size() > 3 && fileName.substr(fileName.size() - 3, 3) == ".gz")
         finalLen -= 3;
+    else if (fileName.size() > 4 && fileName.substr(fileName.size() - 4, 4) == ".zst")
+        finalLen -= 4;
 }
 
 const size_t chunkSize = 10000000;

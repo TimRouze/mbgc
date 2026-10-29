@@ -36,6 +36,10 @@ mgmpInFile mgmpInOpen(const char *filename) {
             string tmpname = filename + string(".gz");
             f = fopen(tmpname.c_str(), "rb");
             if (f == NULL) {
+                tmpname = filename + string(".zst");
+                f = fopen(tmpname.c_str(), "rb");
+            }
+            if (f == NULL) {
                 fprintf(stderr, "ERROR: Cannot open file: %s\n", filename);
                 switch (filename[0]) {
                 case ' ': case '\t': case '\r': case '\n':
@@ -109,6 +113,53 @@ mgmpInFile mgmpInOpen(const char *filename) {
         } while (inPos < size);
         free(in);
         libdeflate_free_decompressor(d);
+    } else if (size >= 4 && load_u32_gzip(in) == ZSTD_MAGIC) {
+#ifdef MBGC_WITH_ZSTD
+        unsigned long long frame_size = ZSTD_getFrameContentSize(in, size);
+        size_t uncompressed_size = (frame_size == ZSTD_CONTENTSIZE_UNKNOWN || frame_size == ZSTD_CONTENTSIZE_ERROR)
+                ? size * 4 : frame_size + 1;
+        if ((gzf.out = (uint8_t*) malloc(uncompressed_size)) == NULL) {
+            fprintf(stderr, "Error: out of memory during %s decompression.\n", filename);
+            exit(EXIT_FAILURE);
+        };
+        ZSTD_DCtx* d = ZSTD_createDCtx();
+        if (d == NULL) {
+            fprintf(stderr, "Cannot allocate decompressor.\n");
+            exit(EXIT_FAILURE);
+        }
+        // streaming API handles multi-frame files (e.g. concatenated or pzstd output)
+        ZSTD_inBuffer zin = { in, size, 0 };
+        ZSTD_outBuffer zout = { gzf.out, uncompressed_size, 0 };
+        size_t res = 0;
+        while (zin.pos < zin.size || zout.pos == zout.size) {
+            if (zout.pos == zout.size) {
+                uncompressed_size *= 2;
+                if ((gzf.out = (uint8_t*) realloc(gzf.out, uncompressed_size)) == NULL) {
+                    fprintf(stderr, "Error: out of memory during %s decompression.\n", filename);
+                    exit(EXIT_FAILURE);
+                };
+                zout.dst = gzf.out;
+                zout.size = uncompressed_size;
+            }
+            res = ZSTD_decompressStream(d, &zout, &zin);
+            if (ZSTD_isError(res)) {
+                fprintf(stderr, "Error decompressing zstd file: %s.\n", ZSTD_getErrorName(res));
+                exit(EXIT_FAILURE);
+            }
+            if (res == 0 && zin.pos == zin.size)
+                break;
+        }
+        if (res != 0) {
+            fprintf(stderr, "Error decompressing zstd file: %s is truncated.\n", filename);
+            exit(EXIT_FAILURE);
+        }
+        gzf.size = zout.pos;
+        free(in);
+        ZSTD_freeDCtx(d);
+#else
+        fprintf(stderr, "ERROR: %s is zstd-compressed, but mbgc was built without zstd support.\n", filename);
+        exit(EXIT_FAILURE);
+#endif
     } else
     { //input is not compressed?
         gzf.out = in;

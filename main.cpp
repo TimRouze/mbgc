@@ -113,9 +113,9 @@ void printEncodeUsage(string base_cmd_name, bool details, bool repackMode) {
 
         if (details) {
             fprintf(stderr,
-                    "\n<fastaFileList> name of text file with a list of FASTA files (raw or gz)\n"
+                    "\n<fastaFileList> name of text file with a list of FASTA files (raw, gz or zst)\n"
                     "\t(given in separate lines) for compression\n"
-                    "<inputFastaFile> name of a FASTA file (raw or gz) for compression\n"
+                    "<inputFastaFile> name of a FASTA file (raw, gz or zst) for compression\n"
                     "\tfor standard input, set <inputFastaFile> to %s\n"
                     "<archiveFile> mbgc archive filename\n"
                     "\tfor standard output in compression, set <archiveFile> to %s\n",
@@ -679,9 +679,9 @@ void printAppendUsage(string base_cmd_name, bool details) {
 
     if (details) {
         fprintf(stderr,
-                "\n<fastaFileList> name of text file with a list of FASTA files (raw or gz)\n"
+                "\n<fastaFileList> name of text file with a list of FASTA files (raw, gz or zst)\n"
                 "\t(given in separate lines) for appending to the <archiveFile>\n"
-                "<inputFastaFile> name of a FASTA file (raw or gz) appended to the <archiveFile>\n"
+                "<inputFastaFile> name of a FASTA file (raw, gz or zst) appended to the <archiveFile>\n"
                 "\tfor standard input, set <inputFastaFile> to %s\n"
                 "<archiveFile> mbgc archive filename to be appended\n"
                 "\tfor standard input (and output if <outputArchiveFile> is not defined)\n"
